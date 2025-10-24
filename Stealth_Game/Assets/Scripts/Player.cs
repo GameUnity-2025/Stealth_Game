@@ -2,67 +2,162 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour {
+// Bắt buộc phải có CharacterController
+[RequireComponent(typeof(CharacterController))]
+public class Player : MonoBehaviour
+{
+    private Animator animator;
+    public event System.Action OnReachEndOfLevel;
 
-	public event System.Action OnReachEndOfLevel;
+    [Header("Movement Settings")]
+    public float moveSpeed = 7f;
+    public float smoothMoveTime = 0.1f;
 
-	public float moveSpeed = 7;
-	public float smoothMoveTime = .1f;
-	public float turnSpeed = 8;
+    [Header("Jump Settings")]
+    public float jumpForce = 5f; // Lực nhảy
+    // Bỏ turnSpeed vì không dùng cho FPS
 
-	float angle;
-	float smoothInputPressed;
-	float smoothMoveVelocity;
-	Vector3 velocity;
+    [Header("Look / Camera")]
+    public float mouseSensitivity = 2f; // Độ nhạy chuột
+    public Transform cameraTransform; // Gán Main Camera (child) vào đây
 
-	Rigidbody skeleton;
-	bool CantMove;
+    // Internal
+    private CharacterController controller;
+    private float smoothInputMagnitude;
+    private float smoothMoveVelocity;
+    private Vector3 moveVelocity;   // vector vận tốc ngang (x,z)
+    private float pitch = 0f;       // góc nhìn dọc (vertical look)
+    private bool canMove = true;
 
-	void Start() {
-		skeleton = GetComponent<Rigidbody> ();
-		Guard.OnGuardHasSpottedPlayer += Disable;
-	}
+    // gravity
+    private float verticalVelocity = 0f;
+    public float gravity = -9.81f;
+    public float groundedGravity = -0.5f; // giữ người đứng sát đất
 
-	// Update is called once per frame
-	void Update () {
-		Vector3 inputDirection = Vector3.zero;
-		//Only moves if the player has not been spotted
-		if (!CantMove) {
-			//movement of player, "GetAxisRaw" makes the movement smoother
-			inputDirection = new Vector3(Input.GetAxisRaw("Horizontal"),0,Input.GetAxisRaw("Vertical")).normalized;
-		}
-		//only move when there is an input
-		float inputPressed = inputDirection.magnitude;
-		//smooths the players movement, "ref" allows me to change the variable of smoothMoveVelocity on the fly
-		smoothInputPressed = Mathf.SmoothDamp(smoothInputPressed, inputPressed, ref smoothMoveVelocity, smoothMoveTime);
-		//direction player is facing
-		float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg;
-		//controls angle smoothing
-		angle = Mathf.LerpAngle(angle, targetAngle, Time.deltaTime * turnSpeed * inputPressed);
+    private void Start()
+    {
+        // ... (Giữ nguyên Start)
+        controller = GetComponent<CharacterController>();
+        if (controller == null)
+        {
+            Debug.LogError("Player: CharacterController missing!");
+        }
 
-		velocity = transform.forward * moveSpeed * smoothInputPressed;
-	}
-	//trigger to see if the player has reached the end point, then disable movement
-	void OnTriggerEnter(Collider hitCollider) {
-		if (hitCollider.tag == "Finish") {
-			Disable ();
-			if (OnReachEndOfLevel != null){
-				OnReachEndOfLevel ();
-			}
-		}
-	}
+        if (cameraTransform == null && Camera.main != null)
+            cameraTransform = Camera.main.transform;
 
-	void Disable() {
-		CantMove = true;
-	}
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
-	void FixedUpdate(){
-		skeleton.MoveRotation(Quaternion.Euler(Vector3.up * angle));
-		skeleton.MovePosition(skeleton.position + velocity * Time.deltaTime);
-	}
+        animator = GetComponentInChildren<Animator>();
+    }
 
-	void OnDestroy () {
-		//calls this method when player is destroyed, for example if the scene has changed etc
-		Guard.OnGuardHasSpottedPlayer -= Disable;
-	}
+    private void Update()
+    {
+        if (!canMove) return;
+
+        HandleLook();
+        HandleMovement();
+    }
+
+    private void HandleLook()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+        transform.Rotate(Vector3.up * mouseX);
+
+        pitch -= mouseY;
+        pitch = Mathf.Clamp(pitch, -80f, 80f);
+        if (cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+    }
+
+    // Đã sửa hàm HandleMovement() trong Player.cs
+    private void HandleMovement()
+    {
+        // 1. Input ngang
+        Vector3 inputDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical")).normalized;
+        float inputMag = inputDir.magnitude;
+
+        // 2. Smooth Input
+        smoothInputMagnitude = Mathf.SmoothDamp(smoothInputMagnitude, inputMag, ref smoothMoveVelocity, smoothMoveTime);
+
+        // 3. Tính Vector di chuyển theo hướng Player (FPS)
+        Vector3 moveDir = (transform.right * inputDir.x + transform.forward * inputDir.z).normalized;
+        moveVelocity = moveDir * moveSpeed * smoothInputMagnitude;
+
+        // ************************************************
+        // LOGIC ANIMATION
+        // ************************************************
+        if (animator != null)
+        {
+            // Cập nhật tham số Speed (Idle/Run)
+            // smoothInputMagnitude sẽ là 0 khi không di chuyển và gần 1 khi di chuyển
+            animator.SetFloat("Speed", smoothInputMagnitude);
+        }
+        // ************************************************
+
+        // 4. Gravity & Jump Logic
+        if (controller.isGrounded)
+        {
+            verticalVelocity = groundedGravity;
+
+            // --- Cập nhật Animation: Tiếp đất ---
+            if (animator != null)
+            {
+                animator.SetBool("IsFalling", false);
+            }
+
+            // XỬ LÝ NHẢY: Nếu đang đứng trên đất và nhấn Space
+            if (Input.GetKey(KeyCode.Space))
+            {
+                verticalVelocity = jumpForce;
+
+                // --- Cập nhật Animation: Bắt đầu nhảy ---
+                if (animator != null)
+                {
+                    animator.SetTrigger("JumpTrigger");
+                }
+            }
+        }
+        else 
+        {
+            // Áp dụng trọng lực
+            verticalVelocity += gravity * Time.deltaTime;
+
+            // --- Cập nhật Animation: Đang trên không ---
+            if (animator != null)
+            {
+                // Kích hoạt cờ IsFalling để chạy animation Rơi/Giữ Jump
+                animator.SetBool("IsFalling", true);
+            }
+        }
+
+        // 5. Kết hợp vận tốc ngang và dọc
+        Vector3 finalVelocity = moveVelocity + Vector3.up * verticalVelocity;
+
+        // 6. Di chuyển bằng CharacterController
+        controller.Move(finalVelocity * Time.deltaTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Finish"))
+        {
+            DisableMovement();
+            OnReachEndOfLevel?.Invoke();
+        }
+    }
+
+    private void DisableMovement()
+    {
+        canMove = false;
+        // Logic hiện/ẩn chuột đã được chuyển sang GameUI.cs (cho game over/win)
+    }
+
+    private void OnDestroy()
+    {
+        // ...
+    }
 }
