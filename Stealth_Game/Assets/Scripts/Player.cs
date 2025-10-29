@@ -160,4 +160,9 @@ public class Player : MonoBehaviour
     {
         // ...
     }
+    public void SetAnimator(Animator anim)
+    {
+        this.animator = anim;
+    }
+
 }

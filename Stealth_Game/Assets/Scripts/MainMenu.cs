@@ -14,4 +14,9 @@ public class MainMenu : MonoBehaviour {
 		Debug.Log("Quit");
 		Application.Quit();
 	}
+    // 🆕 Nút chọn nhân vật
+    public void SelectCharacter()
+    {
+        SceneManager.LoadScene("CharacterSelect"); // tên scene bạn đã tạo
+    }
 }
