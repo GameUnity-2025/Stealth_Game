@@ -1,90 +1,87 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameUI : MonoBehaviour
 {
-
     public GameObject gameOver;
-    public GameObject gameWin; // Vẫn cần tham chiếu để hủy đăng ký event, nhưng không dùng để SetActive(true)
+    public GameObject gameWin;
     bool gameIsOver;
 
     void Start()
     {
-        // Đăng ký sự kiện thua
         Guard.OnGuardHasSpottedPlayer += ShowGameLose;
 
-        // *********************************************************
-        // KHẮC PHỤC LỖI NULL REFERENCE: KIỂM TRA PLAYER TRƯỚC
-        // *********************************************************
         Player player = FindFirstObjectByType<Player>();
-
         if (player != null)
-        {
             player.OnReachEndOfLevel += ShowGameWin;
-        }
-        // *********************************************************
     }
 
     void Update()
     {
-        if (gameIsOver)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SceneManager.LoadScene(0); // Quay về Main Menu
-            }
-        }
+        if (gameIsOver && Input.GetKeyDown(KeyCode.Space))
+            SceneManager.LoadScene(0);
     }
 
-    // ************ CHỈ TẢI SCENE KHI THẮNG ************
+    // ===== KHI THẮNG =====
     void ShowGameWin()
     {
         if (gameIsOver) return;
-
         gameIsOver = true;
 
-        // Hủy đăng ký event trước khi chuyển Scene
         Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
         Player player = FindFirstObjectByType<Player>();
         if (player != null)
-        {
             player.OnReachEndOfLevel -= ShowGameWin;
+
+        int current = SceneManager.GetActiveScene().buildIndex;
+        int total = SceneManager.sceneCountInBuildSettings;
+        int next = current + 1;
+
+        // ✅ Bỏ qua các scene trung gian như "stage"
+        while (next < total)
+        {
+            string nextPath = SceneUtility.GetScenePathByBuildIndex(next).ToLower();
+            if (!nextPath.Contains("stage"))
+                break;
+            next++;
         }
 
-        // TẢI SCENE 2 ĐỂ HIỂN THỊ MÀN HÌNH THẮNG
-        SceneManager.LoadScene(2);
-    }
-    // ***************************************************
+        // ✅ Nếu còn level kế thì lưu lại
+        if (next < total)
+        {
+            PlayerPrefs.SetInt("NextLevelIndex", next);
+        }
+        else
+        {
+            PlayerPrefs.SetInt("NextLevelIndex", -1); // Hết game
+        }
 
+        PlayerPrefs.Save();
+
+        // ✅ Chuyển sang scene “stage” (màn hình thắng)
+        SceneManager.LoadScene("stage");
+    }
+
+    // ===== KHI THUA =====
     void ShowGameLose()
     {
         OnGameOver(gameOver);
     }
 
-    // ************ LOGIC THUA (Chỉ hiển thị UI trên Scene hiện tại) ************
     void OnGameOver(GameObject gameOverScreen)
     {
         if (gameIsOver) return;
-
-        if (gameOverScreen != null)
-        {
-            gameOverScreen.SetActive(true);
-        }
-
         gameIsOver = true;
 
-        // Mở khóa chuột khi THUA
+        if (gameOverScreen != null)
+            gameOverScreen.SetActive(true);
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Hủy đăng ký event
         Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
         Player player = FindFirstObjectByType<Player>();
         if (player != null)
-        {
             player.OnReachEndOfLevel -= ShowGameWin;
-        }
     }
 }
