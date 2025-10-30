@@ -37,14 +37,18 @@ public class GameUI : MonoBehaviour
         int total = SceneManager.sceneCountInBuildSettings;
         int next = current + 1;
 
-        // ✅ Bỏ qua các scene trung gian như "stage"
+        // ✅ Bỏ qua các scene trung gian như "stage" hoặc "characterselect"
         while (next < total)
         {
             string nextPath = SceneUtility.GetScenePathByBuildIndex(next).ToLower();
-            if (!nextPath.Contains("stage"))
+
+            // Nếu tên scene có chứa "stage" hoặc "characterselect" → bỏ qua
+            if (!nextPath.Contains("stage") && !nextPath.Contains("characterselect"))
                 break;
+
             next++;
         }
+
 
         // ✅ Nếu còn level kế thì lưu lại
         if (next < total)

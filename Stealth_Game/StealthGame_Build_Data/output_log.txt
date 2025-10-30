@@ -2,57 +2,75 @@ Initialize engine version: 5.6.2f1 (a2913c821e27)
 GfxDevice: creating device client; threaded=1
 Direct3D:
     Version:  Direct3D 11.0 [level 11.1]
-    Renderer: NVIDIA GeForce GTX 970 (ID=0x13c2)
+    Renderer: NVIDIA GeForce RTX 3050 Ti Laptop GPU (ID=0x25e0)
     Vendor:   NVIDIA
     VRAM:     3072 MB
-    Driver:   23.21.13.8813
+    Driver:   32.0.15.6109
 Begin MonoManager ReloadAssembly
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.dll into Unity Child Domain
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\TextMeshPro-1.0.55.56.0b12.dll (this message is harmless)
-Loading D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\TextMeshPro-1.0.55.56.0b12.dll into Unity Child Domain
-- Completed reload, in  0.134 seconds
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\System.Core.dll (this message is harmless)
-Platform assembly: D:\Unity Games\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\System.dll (this message is harmless)
-desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\TextMeshPro-1.0.55.56.0b12.dll (this message is harmless)
+Loading C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\TextMeshPro-1.0.55.56.0b12.dll into Unity Child Domain
+- Completed reload, in  0.437 seconds
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Admin\Desktop\test\Stealth_Game\Stealth_Game\StealthGame_Build_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 165Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.874126 ms
-Setting up 2 worker threads for Enlighten.
-  Thread -> id: 3300 -> priority: 1 
-  Thread -> id: 1054 -> priority: 1 
+UnloadTime: 0.623100 ms
+Setting up 8 worker threads for Enlighten.
+  Thread -> id: 835c -> priority: 1 
+  Thread -> id: 3268 -> priority: 1 
+  Thread -> id: a8e8 -> priority: 1 
+  Thread -> id: 6e1c -> priority: 1 
+  Thread -> id: 6e20 -> priority: 1 
+  Thread -> id: a358 -> priority: 1 
+  Thread -> id: 64d4 -> priority: 1 
+  Thread -> id: 5d4c -> priority: 1 
 Unloading 6 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 3.041753 ms
+UnloadTime: 2.790500 ms
 
 Unloading 10 unused Assets to reduce memory usage. Loaded Objects now: 594.
-Total: 0.284354 ms (FindLiveObjects: 0.023223 ms CreateObjectMapping: 0.011611 ms MarkObjects: 0.201721 ms  DeleteObjects: 0.047257 ms)
+Total: 0.259900 ms (FindLiveObjects: 0.025100 ms CreateObjectMapping: 0.009600 ms MarkObjects: 0.167500 ms  DeleteObjects: 0.056700 ms)
 
 Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 3.651238 ms
+UnloadTime: 0.891300 ms
 
 Unloading 14 unused Assets to reduce memory usage. Loaded Objects now: 369.
-Total: 1.421771 ms (FindLiveObjects: 0.054548 ms CreateObjectMapping: 0.056708 ms MarkObjects: 0.878176 ms  DeleteObjects: 0.429636 ms)
+Total: 0.349700 ms (FindLiveObjects: 0.018200 ms CreateObjectMapping: 0.009300 ms MarkObjects: 0.221800 ms  DeleteObjects: 0.099500 ms)
 
 Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 0.304607 ms
+UnloadTime: 0.288300 ms
 
 Unloading 8 unused Assets to reduce memory usage. Loaded Objects now: 595.
-Total: 0.284084 ms (FindLiveObjects: 0.030784 ms CreateObjectMapping: 0.018092 ms MarkObjects: 0.210092 ms  DeleteObjects: 0.024303 ms)
+Total: 0.220000 ms (FindLiveObjects: 0.026300 ms CreateObjectMapping: 0.009500 ms MarkObjects: 0.160000 ms  DeleteObjects: 0.023400 ms)
 
 Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
-UnloadTime: 1.292961 ms
+UnloadTime: 0.378400 ms
 
 Unloading 14 unused Assets to reduce memory usage. Loaded Objects now: 369.
-Total: 1.360201 ms (FindLiveObjects: 0.050497 ms CreateObjectMapping: 0.052928 ms MarkObjects: 0.843881 ms  DeleteObjects: 0.411003 ms)
+Total: 0.345300 ms (FindLiveObjects: 0.017600 ms CreateObjectMapping: 0.008700 ms MarkObjects: 0.214600 ms  DeleteObjects: 0.103300 ms)
+
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 0.412500 ms
+
+Unloading 8 unused Assets to reduce memory usage. Loaded Objects now: 595.
+Total: 0.225500 ms (FindLiveObjects: 0.027900 ms CreateObjectMapping: 0.009300 ms MarkObjects: 0.163700 ms  DeleteObjects: 0.023600 ms)
+
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 0.522500 ms
+
+Unloading 14 unused Assets to reduce memory usage. Loaded Objects now: 369.
+Total: 0.354500 ms (FindLiveObjects: 0.029300 ms CreateObjectMapping: 0.008800 ms MarkObjects: 0.214300 ms  DeleteObjects: 0.101000 ms)
 
 Quit
  

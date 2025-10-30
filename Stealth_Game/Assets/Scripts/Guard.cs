@@ -22,14 +22,18 @@ public class Guard : MonoBehaviour {
 	Transform player;
 	Color MainSpotLightColor;
 
-	void Start() {
+    private Animator animator;
+
+    void Start() {
 		//finds the player tag
 		player = GameObject.FindGameObjectWithTag ("Player").transform;
 		viewAngle = spotlight.spotAngle;
 		MainSpotLightColor = spotlight.color;
 
-		// array of all points in the path, the size depends on the chil dren within the path
-		Vector3[] waypoints = new Vector3[pathHolder.childCount];
+        animator = GetComponentInChildren<Animator>();
+
+        // array of all points in the path, the size depends on the chil dren within the path
+        Vector3[] waypoints = new Vector3[pathHolder.childCount];
 
 		for (int i = 0; i < waypoints.Length; i++) {
 				waypoints [i] = pathHolder.GetChild (i).position;
@@ -57,8 +61,12 @@ public class Guard : MonoBehaviour {
 			if (OnGuardHasSpottedPlayer != null){
 				OnGuardHasSpottedPlayer ();
 			}
+            if (animator != null)
+            {
+                animator.SetTrigger("attack");
+            }
 
-		}
+        }
 	}
 
 	bool CanSeePlayer(){
