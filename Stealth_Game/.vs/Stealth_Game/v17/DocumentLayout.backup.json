@@ -3,11 +3,15 @@
   "WorkspaceRootPath": "C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|c:\\users\\admin\\desktop\\test\\stealth_game\\stealth_game\\assets\\scripts\\guard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\guard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|c:\\users\\admin\\desktop\\test\\stealth_game\\stealth_game\\assets\\scripts\\mainmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\mainmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|c:\\users\\admin\\desktop\\test\\stealth_game\\stealth_game\\assets\\scripts\\gameui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\assets\\scripts\\gameui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6027C06A-5928-69BC-CF7E-F5A3140409EC}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\gameui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -31,6 +35,19 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "Guard.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\Assets\\Scripts\\Guard.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Guard.cs",
+              "ToolTip": "C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\Assets\\Scripts\\Guard.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Guard.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAIwEEAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-29T13:52:29.632Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "MainMenu.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\Assets\\Scripts\\MainMenu.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\MainMenu.cs",
@@ -43,7 +60,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "GameUI.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\Desktop\\test\\Stealth_Game\\Stealth_Game\\Assets\\Scripts\\GameUI.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\GameUI.cs",
@@ -51,8 +68,7 @@
               "RelativeToolTip": "Assets\\Scripts\\GameUI.cs",
               "ViewState": "AgIAABgAAAAAAAAAAAAiwDIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-29T10:28:39.613Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-29T10:28:39.613Z"
             }
           ]
         }
