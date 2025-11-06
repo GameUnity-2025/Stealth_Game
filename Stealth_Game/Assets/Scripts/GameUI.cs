@@ -21,20 +21,26 @@ public class GameUI : MonoBehaviour
         // chỉ xử lý khi game đã kết thúc
         if (!gameIsOver) return;
 
-        // Nếu đang hiển thị màn Lose -> Space = chơi lại màn hiện tại
-        if (gameOver != null && gameOver.activeSelf && Input.GetKeyDown(KeyCode.Space))
+        // 👉 Kiểm tra nhấn Space (PC) hoặc chạm màn hình (Mobile)
+        bool replayPressed = Input.GetKeyDown(KeyCode.Space) || Input.touchCount > 0;
+
+        // Nếu đang hiển thị màn Lose -> nhấn Space hoặc chạm màn hình để chơi lại
+        if (gameOver != null && gameOver.activeSelf && replayPressed)
         {
             int current = SceneManager.GetActiveScene().buildIndex;
             SceneManager.LoadScene(current);
         }
 
-        // Nếu đang hiển thị màn Lose hoặc Win -> phím M để về menu
+        // Nếu đang hiển thị màn Lose hoặc Win -> phím M hoặc chạm 2 ngón để về menu
+        bool backToMenuPressed = Input.GetKeyDown(KeyCode.M) || Input.touchCount >= 2;
+
         if ((gameOver != null && gameOver.activeSelf || (gameWin != null && gameWin.activeSelf))
-            && Input.GetKeyDown(KeyCode.M))
+            && backToMenuPressed)
         {
             SceneManager.LoadScene("Menu");
         }
     }
+
 
 
     // ===== KHI THẮNG =====
