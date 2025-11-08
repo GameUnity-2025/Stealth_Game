@@ -1,77 +1,110 @@
-﻿using UnityEngine;
+﻿// 11/8/2025 AI-Tag
+// This was created with the help of Assistant, a Unity Artificial Intelligence product.
+
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameUI : MonoBehaviour
 {
     public GameObject gameOver;
     public GameObject gameWin;
+    // Đã đổi tên biến để rõ ràng hơn: mobileJoystick là RectTransform của toàn bộ Joystick UI
+    public RectTransform mobileJoystickArea;
+
+    // Thêm biến cho Nút UI Về Menu
+    // Bạn nên đặt Nút Menu là con của Canvas Game Over (hoặc Game Win)
+    public GameObject backToMenuButton;
+
     bool gameIsOver;
 
     void Start()
     {
+        // Gắn sự kiện
         Guard.OnGuardHasSpottedPlayer += ShowGameLose;
 
         Player player = FindFirstObjectByType<Player>();
         if (player != null)
             player.OnReachEndOfLevel += ShowGameWin;
+
+        // Ẩn nút Về Menu khi game bắt đầu (đảm bảo chỉ hiện khi thua/thắng)
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(false);
+    }
+
+    void OnDestroy()
+    {
+        // Đảm bảo hủy đăng ký khi GameObject bị hủy
+        Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
+        Player player = FindFirstObjectByType<Player>();
+        if (player != null)
+            player.OnReachEndOfLevel -= ShowGameWin;
     }
 
     void Update()
     {
-        // chỉ xử lý khi game đã kết thúc
+        // Chỉ xử lý logic UI game nếu game kết thúc
         if (!gameIsOver) return;
 
-        // 👉 Kiểm tra nhấn Space (PC) hoặc chạm màn hình (Mobile)
-        bool replayPressed = Input.GetKeyDown(KeyCode.Space) || Input.touchCount > 0;
+        // --- LOGIC XỬ LÝ CHƠI LẠI (REPLAY) ---
 
-        // Nếu đang hiển thị màn Lose -> nhấn Space hoặc chạm màn hình để chơi lại
-        if (gameOver != null && gameOver.activeSelf && replayPressed)
+        // Kiểm tra xem Input có nằm ngoài khu vực Joystick hay không
+        bool isTouchOutsideJoystick = true;
+        if (Input.touchCount > 0 && mobileJoystickArea != null)
         {
-            int current = SceneManager.GetActiveScene().buildIndex;
-            SceneManager.LoadScene(current);
+            Touch touch = Input.GetTouch(0);
+
+            // Sử dụng mobileJoystickArea (RectTransform) để kiểm tra
+            if (RectTransformUtility.RectangleContainsScreenPoint(mobileJoystickArea, touch.position))
+            {
+                isTouchOutsideJoystick = false;
+            }
         }
 
-        // Nếu đang hiển thị màn Lose hoặc Win -> phím M hoặc chạm 2 ngón để về menu
-        bool backToMenuPressed = Input.GetKeyDown(KeyCode.M) || Input.touchCount >= 2;
+        // Xử lý logic Replay (Space cho PC/Simulator, Touch bên ngoài Joystick cho Mobile)
+       
 
-        if ((gameOver != null && gameOver.activeSelf || (gameWin != null && gameWin.activeSelf))
-            && backToMenuPressed)
-        {
-            SceneManager.LoadScene("Menu");
-        }
+        // BỎ logic Input.GetKeyDown(KeyCode.M) và Input.touchCount >= 2 (2 chạm) 
+        // Logic Về Menu sẽ được xử lý bằng hàm BackToMenu() gọi từ nút UI.
     }
+    public void ReplayGame()
+    {
+        // Đảm bảo game đã kết thúc trước khi chơi lại
+        if (!gameIsOver)
+        {
+            Debug.LogWarning("ReplayGame called before game ended.");
+            return;
+        }
 
-
-
+        // Chơi lại màn hiện tại
+        int current = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(current);
+    }
     // ===== KHI THẮNG =====
     void ShowGameWin()
     {
         if (gameIsOver) return;
         gameIsOver = true;
 
+        // Dọn dẹp sự kiện
         Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
         Player player = FindFirstObjectByType<Player>();
         if (player != null)
             player.OnReachEndOfLevel -= ShowGameWin;
 
+        // Logic lưu Level & chuyển scene "stage"
         int current = SceneManager.GetActiveScene().buildIndex;
         int total = SceneManager.sceneCountInBuildSettings;
         int next = current + 1;
 
-        // ✅ Bỏ qua các scene trung gian như "stage" hoặc "characterselect"
+        // Bỏ qua các scene trung gian (stage, characterselect)
         while (next < total)
         {
             string nextPath = SceneUtility.GetScenePathByBuildIndex(next).ToLower();
-
-            // Nếu tên scene có chứa "stage" hoặc "characterselect" → bỏ qua
             if (!nextPath.Contains("stage") && !nextPath.Contains("characterselect"))
                 break;
-
             next++;
         }
 
-
-        // ✅ Nếu còn level kế thì lưu lại
         if (next < total)
         {
             PlayerPrefs.SetInt("NextLevelIndex", next);
@@ -83,7 +116,7 @@ public class GameUI : MonoBehaviour
 
         PlayerPrefs.Save();
 
-        // ✅ Chuyển sang scene “stage” (màn hình thắng)
+        // Chuyển sang scene “stage” (màn hình thắng/chuyển màn)
         SceneManager.LoadScene("stage");
     }
 
@@ -96,6 +129,10 @@ public class GameUI : MonoBehaviour
         if (gameOver != null)
             gameOver.SetActive(true);
 
+        // Hiển thị nút Về Menu
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(true);
+
         // Lưu lại màn hiện tại để khi vào Menu và bấm Play sẽ tiếp tục từ màn này
         int currentScene = SceneManager.GetActiveScene().buildIndex;
         PlayerPrefs.SetInt("NextLevelIndex", currentScene);
@@ -104,14 +141,26 @@ public class GameUI : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Hủy đăng ký để tránh gọi lại
+        // Dọn dẹp sự kiện
         Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
         Player player = FindFirstObjectByType<Player>();
         if (player != null)
             player.OnReachEndOfLevel -= ShowGameWin;
     }
 
+    // ===== HÀM MỚI: Dùng cho Nút UI Về Menu (Public để gán vào UI) =====
+    public void BackToMenu()
+    {
+        
 
+        SceneManager.LoadScene("Menu");
+
+        // Đảm bảo con trỏ chuột được mở
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    // Hàm gốc OnGameOver của bạn không được dùng, nên tôi giữ nguyên (có thể bạn gọi từ nơi khác)
     void OnGameOver(GameObject gameOverScreen)
     {
         if (gameIsOver) return;

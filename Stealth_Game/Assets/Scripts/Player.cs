@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using PinePie.SimpleJoystick;
 
-// Bắt buộc phải có CharacterController
 [RequireComponent(typeof(CharacterController))]
 public class Player : MonoBehaviour
 {
@@ -14,132 +15,175 @@ public class Player : MonoBehaviour
     public float smoothMoveTime = 0.1f;
 
     [Header("Jump Settings")]
-    public float jumpForce = 5f; // Lực nhảy
-    // Bỏ turnSpeed vì không dùng cho FPS
+    public float jumpForce = 5f; 
 
     [Header("Look / Camera")]
-    public float mouseSensitivity = 2f; // Độ nhạy chuột
-    public Transform cameraTransform; // Gán Main Camera (child) vào đây
+    public float mouseSensitivity = 2f; 
+    public Transform cameraTransform; 
 
-    // Internal
+    [Header("Mobile Input")]
+    public JoystickController mobileJoystick;
+    public float touchSensitivity = 0.1f;
+
+    private bool isJumpPressedThisFrame = false;
     private CharacterController controller;
     private float smoothInputMagnitude;
     private float smoothMoveVelocity;
-    private Vector3 moveVelocity;   // vector vận tốc ngang (x,z)
-    private float pitch = 0f;       // góc nhìn dọc (vertical look)
+    private Vector3 moveVelocity;
+    private float pitch = 0f;
     private bool canMove = true;
 
-    // gravity
+    // Gravity
     private float verticalVelocity = 0f;
     public float gravity = -9.81f;
-    public float groundedGravity = -0.5f; // giữ người đứng sát đất
+    public float groundedGravity = -5f; // Đã tăng lực giữ đất để đảm bảo isGrounded = true
 
     private void Start()
     {
-        // ... (Giữ nguyên Start)
         controller = GetComponent<CharacterController>();
         if (controller == null)
         {
             Debug.LogError("Player: CharacterController missing!");
         }
-
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        #if UNITY_STANDALONE || UNITY_EDITOR
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        #endif
 
         animator = GetComponentInChildren<Animator>();
+        // Debug.Log("Animator connected: " + (animator != null));
     }
 
     private void Update()
     {
         if (!canMove) return;
-
         HandleLook();
         HandleMovement();
     }
 
     private void HandleLook()
     {
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        if (mobileJoystick != null && mobileJoystick.IsDragging)
+        {
+            return;
+        }
 
-        transform.Rotate(Vector3.up * mouseX);
+        float lookX = 0f;
+        float lookY = 0f;
 
-        pitch -= mouseY;
+        #if UNITY_STANDALONE || UNITY_EDITOR
+        bool isMouseOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
+        if (!isMouseOverUI && Input.GetMouseButton(0))
+        {
+             lookX = Input.GetAxis("Mouse X") * mouseSensitivity;
+             lookY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        }
+        #endif
+
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            bool isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+            if (touch.phase == TouchPhase.Moved && !isPointerOverUI && touch.position.x > Screen.width / 2f)
+            {
+                lookX = touch.deltaPosition.x * mouseSensitivity * touchSensitivity;
+                lookY = touch.deltaPosition.y * mouseSensitivity * touchSensitivity;
+            }
+        }
+
+        transform.Rotate(Vector3.up * lookX);
+        pitch -= lookY;
         pitch = Mathf.Clamp(pitch, -80f, 80f);
         if (cameraTransform != null)
             cameraTransform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
     }
 
-    // Đã sửa hàm HandleMovement() trong Player.cs
     private void HandleMovement()
     {
-        // 1. Input ngang
-        Vector3 inputDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical")).normalized;
-        float inputMag = inputDir.magnitude;
+        // 1. Logic Input và Tốc độ
+        float horzInput = (mobileJoystick != null) ? mobileJoystick.InputDirection.x : Input.GetAxisRaw("Horizontal");
+        float vertInput = (mobileJoystick != null) ? mobileJoystick.InputDirection.y : Input.GetAxisRaw("Vertical");
+        float targetInputMagnitude = (mobileJoystick != null) ? mobileJoystick.InputDirection.magnitude : new Vector2(horzInput, vertInput).normalized.magnitude;
 
-        // 2. Smooth Input
-        smoothInputMagnitude = Mathf.SmoothDamp(smoothInputMagnitude, inputMag, ref smoothMoveVelocity, smoothMoveTime);
-
-        // 3. Tính Vector di chuyển theo hướng Player (FPS)
-        Vector3 moveDir = (transform.right * inputDir.x + transform.forward * inputDir.z).normalized;
+        smoothInputMagnitude = Mathf.SmoothDamp(smoothInputMagnitude, targetInputMagnitude, ref smoothMoveVelocity, smoothMoveTime);
+        Vector3 rawInputDirection = new Vector3(horzInput, 0f, vertInput).normalized;
+        Vector3 moveDir = (transform.right * rawInputDirection.x + transform.forward * rawInputDirection.z).normalized;
         moveVelocity = moveDir * moveSpeed * smoothInputMagnitude;
 
-        // ************************************************
-        // LOGIC ANIMATION
-        // ************************************************
+        // LOGIC ANIMATION TỐC ĐỘ (Run/Idle)
         if (animator != null)
         {
-            // Cập nhật tham số Speed (Idle/Run)
-            // smoothInputMagnitude sẽ là 0 khi không di chuyển và gần 1 khi di chuyển
             animator.SetFloat("Speed", smoothInputMagnitude);
         }
-        // ************************************************
 
-        // 4. Gravity & Jump Logic
+        // *******************************************************
+        // LOGIC JUMP VÀ GRAVITY ĐÃ SỬA CHỮA (Tương thích Animator)
+        // *******************************************************
+        
+        bool inputJump = Input.GetKey(KeyCode.Space) || isJumpPressedThisFrame;
+
         if (controller.isGrounded)
         {
-            verticalVelocity = groundedGravity;
-
-            // --- Cập nhật Animation: Tiếp đất ---
-            if (animator != null)
-            {
-                animator.SetBool("IsFalling", false);
-            }
-
-            // XỬ LÝ NHẢY: Nếu đang đứng trên đất và nhấn Space
-            if (Input.GetKey(KeyCode.Space))
+            // 1. Kích hoạt Jump (Chỉ khi đang chạm đất)
+            if (inputJump)
             {
                 verticalVelocity = jumpForce;
 
-                // --- Cập nhật Animation: Bắt đầu nhảy ---
                 if (animator != null)
                 {
-                    animator.SetTrigger("JumpTrigger");
+                    // !!! SỬA LỖI TÊN TRIGGER: Dùng "JumpTrigger"
+                    animator.SetTrigger("JumpTrigger"); 
+                    // Set trạng thái False ngay lập tức để chuyển sang Jump/Fall
+                    animator.SetBool("IsFalling", true); // Dùng IsFalling để thể hiện đang trên không
+                    // Nếu bạn có IsGrounded trong Animator:
+                    // animator.SetBool("IsGrounded", false);
+                }
+            }
+            else 
+            {
+                // 2. Đang chạm đất VÀ không nhảy -> Áp dụng trọng lực giữ đất & Set IsFalling FALSE
+                verticalVelocity = groundedGravity; 
+                if (animator != null)
+                {
+                    animator.SetBool("IsFalling", false); 
+                    // Nếu bạn có IsGrounded trong Animator:
+                    // animator.SetBool("IsGrounded", true);
                 }
             }
         }
-        else 
+        else // Đang trên không
         {
-            // Áp dụng trọng lực
+            // 3. Áp dụng trọng lực & Set IsFalling TRUE
             verticalVelocity += gravity * Time.deltaTime;
 
-            // --- Cập nhật Animation: Đang trên không ---
             if (animator != null)
             {
-                // Kích hoạt cờ IsFalling để chạy animation Rơi/Giữ Jump
                 animator.SetBool("IsFalling", true);
+                // Nếu bạn có IsGrounded trong Animator:
+                // animator.SetBool("IsGrounded", false);
             }
         }
 
-        // 5. Kết hợp vận tốc ngang và dọc
-        Vector3 finalVelocity = moveVelocity + Vector3.up * verticalVelocity;
+        // Đặt lại cờ Nhảy
+        isJumpPressedThisFrame = false;
 
-        // 6. Di chuyển bằng CharacterController
+        // 5. Di chuyển CharacterController
+        Vector3 finalVelocity = moveVelocity + Vector3.up * verticalVelocity;
         controller.Move(finalVelocity * Time.deltaTime);
     }
+
+    // HÀM CÔNG KHAI CHO NÚT NHẢY UI
+    public void OnJumpButtonDown()
+    {
+        if (canMove)
+        {
+            isJumpPressedThisFrame = true;
+        }
+    }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -153,16 +197,10 @@ public class Player : MonoBehaviour
     private void DisableMovement()
     {
         canMove = false;
-        // Logic hiện/ẩn chuột đã được chuyển sang GameUI.cs (cho game over/win)
     }
 
-    private void OnDestroy()
-    {
-        // ...
-    }
     public void SetAnimator(Animator anim)
     {
         this.animator = anim;
     }
-
 }
