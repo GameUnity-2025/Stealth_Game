@@ -26,9 +26,7 @@ public class GameUI : MonoBehaviour
         if (player != null)
             player.OnReachEndOfLevel += ShowGameWin;
 
-        // Ẩn nút Về Menu khi game bắt đầu (đảm bảo chỉ hiện khi thua/thắng)
-        if (backToMenuButton != null)
-            backToMenuButton.SetActive(false);
+        
     }
 
     void OnDestroy()
@@ -129,9 +127,7 @@ public class GameUI : MonoBehaviour
         if (gameOver != null)
             gameOver.SetActive(true);
 
-        // Hiển thị nút Về Menu
-        if (backToMenuButton != null)
-            backToMenuButton.SetActive(true);
+        
 
         // Lưu lại màn hiện tại để khi vào Menu và bấm Play sẽ tiếp tục từ màn này
         int currentScene = SceneManager.GetActiveScene().buildIndex;

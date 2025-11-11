@@ -68,6 +68,7 @@
     <Compile Include="Assets\PlayerInputActions.cs" />
     <Compile Include="Assets\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Scene2Manager.cs" />
+    <Compile Include="Assets\Scripts\TutorialManager.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\JoystickController.cs" />
     <Compile Include="Assets\Scripts\CharacterSelectUI.cs" />
