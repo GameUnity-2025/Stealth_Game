@@ -8,7 +8,8 @@ public class GameUI : MonoBehaviour
 {
     public GameObject gameOver;
     public GameObject gameWin;
-   
+    // Đã đổi tên biến để rõ ràng hơn: mobileJoystick là RectTransform của toàn bộ Joystick UI
+    public RectTransform mobileJoystickArea;
 
     // Thêm biến cho Nút UI Về Menu
     // Bạn nên đặt Nút Menu là con của Canvas Game Over (hoặc Game Win)
@@ -25,6 +26,9 @@ public class GameUI : MonoBehaviour
         if (player != null)
             player.OnReachEndOfLevel += ShowGameWin;
 
+        // Ẩn nút Về Menu khi game bắt đầu (đảm bảo chỉ hiện khi thua/thắng)
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(false);
     }
 
     void OnDestroy()
@@ -43,10 +47,21 @@ public class GameUI : MonoBehaviour
 
         // --- LOGIC XỬ LÝ CHƠI LẠI (REPLAY) ---
 
-        
+        // Kiểm tra xem Input có nằm ngoài khu vực Joystick hay không
+        bool isTouchOutsideJoystick = true;
+        if (Input.touchCount > 0 && mobileJoystickArea != null)
+        {
+            Touch touch = Input.GetTouch(0);
+
+            // Sử dụng mobileJoystickArea (RectTransform) để kiểm tra
+            if (RectTransformUtility.RectangleContainsScreenPoint(mobileJoystickArea, touch.position))
+            {
+                isTouchOutsideJoystick = false;
+            }
+        }
 
         // Xử lý logic Replay (Space cho PC/Simulator, Touch bên ngoài Joystick cho Mobile)
-
+       
 
         // BỎ logic Input.GetKeyDown(KeyCode.M) và Input.touchCount >= 2 (2 chạm) 
         // Logic Về Menu sẽ được xử lý bằng hàm BackToMenu() gọi từ nút UI.
@@ -114,6 +129,9 @@ public class GameUI : MonoBehaviour
         if (gameOver != null)
             gameOver.SetActive(true);
 
+        // Hiển thị nút Về Menu
+        if (backToMenuButton != null)
+            backToMenuButton.SetActive(true);
 
         // Lưu lại màn hiện tại để khi vào Menu và bấm Play sẽ tiếp tục từ màn này
         int currentScene = SceneManager.GetActiveScene().buildIndex;
@@ -133,7 +151,7 @@ public class GameUI : MonoBehaviour
     // ===== HÀM MỚI: Dùng cho Nút UI Về Menu (Public để gán vào UI) =====
     public void BackToMenu()
     {
-
+        
 
         SceneManager.LoadScene("Menu");
 
