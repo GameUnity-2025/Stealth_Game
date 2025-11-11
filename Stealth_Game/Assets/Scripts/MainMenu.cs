@@ -56,6 +56,11 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene("CharacterSelect");
     }
 
+    public void Tutorial()
+    {
+        SceneManager.LoadScene("Tutorial");
+    }
+
     // 👉 Nút thoát
     public void QuitGame()
     {
