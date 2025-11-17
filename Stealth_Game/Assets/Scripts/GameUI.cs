@@ -8,8 +8,7 @@ public class GameUI : MonoBehaviour
 {
     public GameObject gameOver;
     public GameObject gameWin;
-    // Đã đổi tên biến để rõ ràng hơn: mobileJoystick là RectTransform của toàn bộ Joystick UI
-    public RectTransform mobileJoystickArea;
+    
 
     // Thêm biến cho Nút UI Về Menu
     // Bạn nên đặt Nút Menu là con của Canvas Game Over (hoặc Game Win)
@@ -45,18 +44,7 @@ public class GameUI : MonoBehaviour
 
         // --- LOGIC XỬ LÝ CHƠI LẠI (REPLAY) ---
 
-        // Kiểm tra xem Input có nằm ngoài khu vực Joystick hay không
-        bool isTouchOutsideJoystick = true;
-        if (Input.touchCount > 0 && mobileJoystickArea != null)
-        {
-            Touch touch = Input.GetTouch(0);
-
-            // Sử dụng mobileJoystickArea (RectTransform) để kiểm tra
-            if (RectTransformUtility.RectangleContainsScreenPoint(mobileJoystickArea, touch.position))
-            {
-                isTouchOutsideJoystick = false;
-            }
-        }
+        
 
         // Xử lý logic Replay (Space cho PC/Simulator, Touch bên ngoài Joystick cho Mobile)
        
