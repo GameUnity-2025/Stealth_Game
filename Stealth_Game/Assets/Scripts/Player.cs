@@ -15,11 +15,11 @@ public class Player : MonoBehaviour
     public float smoothMoveTime = 0.1f;
 
     [Header("Jump Settings")]
-    public float jumpForce = 5f; 
+    public float jumpForce = 5f;
 
     [Header("Look / Camera")]
-    public float mouseSensitivity = 2f; 
-    public Transform cameraTransform; 
+    public float mouseSensitivity = 2f;
+    public Transform cameraTransform;
 
     [Header("Mobile Input")]
     public JoystickController mobileJoystick;
@@ -48,10 +48,11 @@ public class Player : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
 
-        #if UNITY_STANDALONE || UNITY_EDITOR
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        #endif
+#if UNITY_STANDALONE || UNITY_EDITOR
+        // Tạm thời bỏ khóa chuột cho môi trường Editor
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+#endif
 
         animator = GetComponentInChildren<Animator>();
         // Debug.Log("Animator connected: " + (animator != null));
@@ -66,33 +67,50 @@ public class Player : MonoBehaviour
 
     private void HandleLook()
     {
-        if (mobileJoystick != null && mobileJoystick.IsDragging)
-        {
-            return;
-        }
+        // ** LOẠI BỎ logic: if (mobileJoystick != null && mobileJoystick.IsDragging) return; **
+        // Logic mới sẽ tự động lọc ra các chạm của Joystick
 
         float lookX = 0f;
         float lookY = 0f;
 
-        #if UNITY_STANDALONE || UNITY_EDITOR
+#if UNITY_STANDALONE || UNITY_EDITOR
+        // Xử lý Input chuột trên PC/Editor
         bool isMouseOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
         if (!isMouseOverUI && Input.GetMouseButton(0))
         {
-             lookX = Input.GetAxis("Mouse X") * mouseSensitivity;
-             lookY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+            lookX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            lookY = Input.GetAxis("Mouse Y") * mouseSensitivity;
         }
-        #endif
+#endif
 
-        if (Input.touchCount > 0)
+        // ------------------------------------------------------------------
+        // LOGIC XỬ LÝ CẢM ỨNG ĐA CHẠM (MULTI-TOUCH)
+        // ------------------------------------------------------------------
+
+        // Lặp qua TẤT CẢ các chạm đang có trên màn hình
+        for (int i = 0; i < Input.touchCount; i++)
         {
-            Touch touch = Input.GetTouch(0);
+            Touch touch = Input.GetTouch(i);
+
+            // 1. Kiểm tra xem chạm này có đang ở trên UI không (Bao gồm cả Joystick và nút khác)
             bool isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+
+            // 2. Chỉ xử lý khi ngón tay đang di chuyển (Moved) VÀ
+            //    Không chạm vào UI VÀ
+            //    Nằm ở nửa PHẢI màn hình (Giả định nửa trái là khu vực Joystick)
             if (touch.phase == TouchPhase.Moved && !isPointerOverUI && touch.position.x > Screen.width / 2f)
             {
+                // Tính toán giá trị xoay từ chạm này
                 lookX = touch.deltaPosition.x * mouseSensitivity * touchSensitivity;
                 lookY = touch.deltaPosition.y * mouseSensitivity * touchSensitivity;
+
+                // Sau khi tìm thấy một chạm dùng để xoay, ta thoát (break)
+                // để đảm bảo chỉ có một chạm điều khiển camera.
+                break;
             }
         }
+        // ------------------------------------------------------------------
+
 
         transform.Rotate(Vector3.up * lookX);
         pitch -= lookY;
@@ -120,9 +138,9 @@ public class Player : MonoBehaviour
         }
 
         // *******************************************************
-        // LOGIC JUMP VÀ GRAVITY ĐÃ SỬA CHỮA (Tương thích Animator)
+        // LOGIC JUMP VÀ GRAVITY
         // *******************************************************
-        
+
         bool inputJump = Input.GetKey(KeyCode.Space) || isJumpPressedThisFrame;
 
         if (controller.isGrounded)
@@ -135,20 +153,20 @@ public class Player : MonoBehaviour
                 if (animator != null)
                 {
                     // !!! SỬA LỖI TÊN TRIGGER: Dùng "JumpTrigger"
-                    animator.SetTrigger("JumpTrigger"); 
+                    animator.SetTrigger("JumpTrigger");
                     // Set trạng thái False ngay lập tức để chuyển sang Jump/Fall
                     animator.SetBool("IsFalling", true); // Dùng IsFalling để thể hiện đang trên không
                     // Nếu bạn có IsGrounded trong Animator:
                     // animator.SetBool("IsGrounded", false);
                 }
             }
-            else 
+            else
             {
                 // 2. Đang chạm đất VÀ không nhảy -> Áp dụng trọng lực giữ đất & Set IsFalling FALSE
-                verticalVelocity = groundedGravity; 
+                verticalVelocity = groundedGravity;
                 if (animator != null)
                 {
-                    animator.SetBool("IsFalling", false); 
+                    animator.SetBool("IsFalling", false);
                     // Nếu bạn có IsGrounded trong Animator:
                     // animator.SetBool("IsGrounded", true);
                 }
