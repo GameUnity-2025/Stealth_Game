@@ -13,20 +13,31 @@ public class PlayerController : MonoBehaviour
     private int currentModelIndex = 0; // 0=Rock, 1=Ice, 2=Nature
 
     private Animator animator;
+    // **BIẾN MỚI:** Tham chiếu đến Transform của Model đang active
+    private Transform modelTransform;
 
     // ... (Các biến Movement, Jump, Look... giữ nguyên) ...
     public event System.Action OnReachEndOfLevel;
+
     [Header("Movement Settings")]
     public float moveSpeed = 7f;
     public float smoothMoveTime = 0.1f;
+
+    [Header("Rotation Settings")]
+    // Tốc độ xoay mô hình (Model) bên trong
+    public float modelRotationSpeed = 800f;
+
     [Header("Jump Settings")]
     public float jumpForce = 5f;
+
     [Header("Look / Camera")]
     public float mouseSensitivity = 2f;
     public Transform cameraTransform;
+
     [Header("Mobile Input")]
     public JoystickController mobileJoystick;
     public float touchSensitivity = 0.1f;
+
     private bool isJumpPressedThisFrame = false;
     private CharacterController controller;
     private float smoothInputMagnitude;
@@ -40,17 +51,21 @@ public class PlayerController : MonoBehaviour
 
 
     // --------------------------------------------------------------------
-    // HÀM START (SỬA LẠI ĐỂ DÙNG MẢNG)
+    // HÀM START (Cập nhật để gán modelTransform)
     // --------------------------------------------------------------------
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        if (controller == null)
+        {
+            Debug.LogError("Player: CharacterController missing!");
+        }
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
 
 #if UNITY_STANDALONE || UNITY_EDITOR
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 #endif
 
         // --- LOGIC KHỞI TẠO MỚI (ĐỌC TỪ PLAYERPREFS) ---
@@ -61,7 +76,6 @@ public class PlayerController : MonoBehaviour
             if (characterModels[i] != null) characterModels[i].SetActive(false);
         }
 
-        // Đọc lựa chọn đã lưu từ Menu
         string selectedCharacter = PlayerPrefs.GetString("SelectedCharacter", "HeroRock");
 
         // Xác định index (0, 1, 2) dựa trên tên (string) đã lưu
@@ -84,6 +98,8 @@ public class PlayerController : MonoBehaviour
         {
             characterModels[currentModelIndex].SetActive(true);
             animator = characterModels[currentModelIndex].GetComponent<Animator>();
+            // **GÁN MODEL TRANSFORM SAU KHI KÍCH HOẠT MODEL**
+            modelTransform = characterModels[currentModelIndex].transform;
             UnityEngine.Debug.Log("Đã tải Player: " + selectedCharacter);
         }
         else
@@ -108,17 +124,14 @@ public class PlayerController : MonoBehaviour
     // --------------------------------------------------------------------
     private void OnTriggerEnter(Collider other)
     {
-        // 1. LOGIC HOÁN ĐỔI (ĐÃ GỠ BỎ CHẶN NATURE)
-        if (other.CompareTag("ChangeToIce")) // Vẫn dùng Tag này
+        // 1. LOGIC HOÁN ĐỔI 
+        if (other.CompareTag("ChangeToIce"))
         {
             CharacterChangeStation station = other.GetComponent<CharacterChangeStation>();
-            if (station == null) return; // Không phải trạm
+            if (station == null) return;
 
             int stationIndex = station.GetCurrentModelIndex();
             int playerIndex = this.currentModelIndex;
-
-            // --- CÁC DÒNG 'IF' CHẶN NATURE ĐÃ BỊ XÓA ---
-            // Giờ code sẽ chạy thẳng xuống logic hoán đổi
 
             UnityEngine.Debug.Log("Hoán đổi!");
 
@@ -137,8 +150,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // --- HÀM MỚI: DÙNG ĐỂ SET PLAYER SANG DẠNG MỚI ---
-    // --- HÀM SET MODEL (ĐÃ THÊM LOGIC LƯU) ---
+    // --- HÀM SET MODEL (Cập nhật để gán modelTransform) ---
     public void SetModelActive(int newIndex)
     {
         // Nếu Player đã là dạng đó rồi thì không làm gì
@@ -158,7 +170,10 @@ public class PlayerController : MonoBehaviour
         if (characterModels[currentModelIndex] != null)
         {
             characterModels[currentModelIndex].SetActive(true);
+            // Cập nhật Animator và Model Transform
             SetAnimator(characterModels[currentModelIndex].GetComponent<Animator>());
+            this.modelTransform = characterModels[currentModelIndex].transform;
+
             UnityEngine.Debug.Log("Player đã HOÁN ĐỔI sang: " + characterModels[currentModelIndex].name);
 
             // --- LƯU LỰA CHỌN MỚI ---
@@ -166,13 +181,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // --- HÀM MỚI ĐỂ LƯU LỰA CHỌN ---
+    // --- HÀM LƯU LỰA CHỌN ---
     private void SaveCurrentCharacterChoice(int index)
     {
         string characterName = "HeroRock"; // Mặc định
 
         // Ánh xạ (Map) index (int) sang tên (string)
-        // (Phải khớp với script CharacterSelectUI của bạn)
         switch (index)
         {
             case 0:
@@ -193,21 +207,24 @@ public class PlayerController : MonoBehaviour
     }
 
     // --------------------------------------------------------------------
-    // CÁC HÀM CÒN LẠI (TỪ SCRIPT CŨ CỦA BẠN - Đã sao chép)
+    // CÁC HÀM DI CHUYỂN VÀ CAMERA (Giữ nguyên logic Camera/Player xoay cùng)
     // --------------------------------------------------------------------
 
     public void SetAnimator(Animator anim)
     {
-        // Hàm này dùng để cập nhật biến animator
         this.animator = anim;
+        // **QUAN TRỌNG:** Cập nhật modelTransform khi animator được set (dùng cho logic xoay model)
+        if (anim != null)
+        {
+            this.modelTransform = anim.transform;
+        }
     }
 
     private void HandleLook()
     {
-        if (mobileJoystick != null && mobileJoystick.IsDragging)
-        {
-            return;
-        }
+        // Logic chặn xoay nếu Joystick đang được kéo (Multi-touch)
+        // **Lưu ý:** Logic này chỉ chặn Look khi touch/mouse kéo trên PC/Editor, 
+        // nó sẽ không chặn nếu mobileJoystick.IsDragging đang kiểm soát Input
 
         float lookX = 0f;
         float lookY = 0f;
@@ -216,8 +233,8 @@ public class PlayerController : MonoBehaviour
         bool isMouseOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
         if (!isMouseOverUI && Input.GetMouseButton(0))
         {
-                lookX = Input.GetAxis("Mouse X") * mouseSensitivity;
-                lookY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+            lookX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            lookY = Input.GetAxis("Mouse Y") * mouseSensitivity;
         }
 #endif
 
@@ -232,7 +249,10 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // XOAY PLAYER (Và Camera theo)
         transform.Rotate(Vector3.up * lookX);
+
+        // Xoay Camera Pitch (lên xuống)
         pitch -= lookY;
         pitch = Mathf.Clamp(pitch, -80f, 80f);
         if (cameraTransform != null)
@@ -247,14 +267,49 @@ public class PlayerController : MonoBehaviour
 
         smoothInputMagnitude = Mathf.SmoothDamp(smoothInputMagnitude, targetInputMagnitude, ref smoothMoveVelocity, smoothMoveTime);
         Vector3 rawInputDirection = new Vector3(horzInput, 0f, vertInput).normalized;
+
+        // Tính Vector vận tốc di chuyển (dựa trên hướng của Player (camera) và input)
         Vector3 moveDir = (transform.right * rawInputDirection.x + transform.forward * rawInputDirection.z).normalized;
         moveVelocity = moveDir * moveSpeed * smoothInputMagnitude;
 
-        // Phải kiểm tra animator != null phòng trường hợp bị lỗi
+        // *******************************************************
+        // LOGIC XOAY MÔ HÌNH (MODEL) ĐỘC LẬP
+        // *******************************************************
+        if (modelTransform != null && targetInputMagnitude > 0.1f)
+        {
+            // Tính toán hướng di chuyển (moveDir) so với hướng forward của Player
+            // Đây là hướng mà mô hình cần nhìn tới (trong Local Space của Player)
+            Vector3 targetModelForward = rawInputDirection.normalized;
+
+            // Chuyển hướng Local Space (X, Z) thành Target Rotation
+            Quaternion targetRotation = Quaternion.LookRotation(targetModelForward);
+
+            // Làm mượt việc xoay mô hình (xoay theo trục Y cục bộ)
+            modelTransform.localRotation = Quaternion.RotateTowards(
+                modelTransform.localRotation,
+                targetRotation,
+                modelRotationSpeed * Time.deltaTime
+            );
+        }
+        else if (modelTransform != null && targetInputMagnitude <= 0.1f)
+        {
+            // Đảm bảo mô hình quay về hướng mặc định (forward) khi Idle
+            modelTransform.localRotation = Quaternion.RotateTowards(
+               modelTransform.localRotation,
+               Quaternion.identity,
+               modelRotationSpeed * Time.deltaTime
+           );
+        }
+
+        // LOGIC ANIMATION TỐC ĐỘ (Run/Idle)
         if (animator != null)
         {
             animator.SetFloat("Speed", smoothInputMagnitude);
         }
+
+        // *******************************************************
+        // LOGIC JUMP VÀ GRAVITY (Giữ nguyên)
+        // *******************************************************
 
         bool inputJump = Input.GetKey(KeyCode.Space) || isJumpPressedThisFrame;
 

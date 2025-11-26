@@ -14,6 +14,10 @@ public class Player : MonoBehaviour
     public float moveSpeed = 7f;
     public float smoothMoveTime = 0.1f;
 
+    [Header("Rotation Settings")]
+    // Tốc độ xoay mô hình (Model) bên trong
+    public float modelRotationSpeed = 800f;
+
     [Header("Jump Settings")]
     public float jumpForce = 5f;
 
@@ -33,10 +37,13 @@ public class Player : MonoBehaviour
     private float pitch = 0f;
     private bool canMove = true;
 
+    // **BIẾN MỚI:** Tham chiếu đến đối tượng con chứa mô hình và Animator
+    private Transform modelTransform;
+
     // Gravity
     private float verticalVelocity = 0f;
     public float gravity = -9.81f;
-    public float groundedGravity = -5f; // Đã tăng lực giữ đất để đảm bảo isGrounded = true
+    public float groundedGravity = -5f;
 
     private void Start()
     {
@@ -49,13 +56,17 @@ public class Player : MonoBehaviour
             cameraTransform = Camera.main.transform;
 
 #if UNITY_STANDALONE || UNITY_EDITOR
-        // Tạm thời bỏ khóa chuột cho môi trường Editor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 #endif
 
+        // **Cập nhật:** Tìm Animator và gán Model Transform
         animator = GetComponentInChildren<Animator>();
-        // Debug.Log("Animator connected: " + (animator != null));
+        if (animator != null)
+        {
+            // Model Transform là cha của Animator (hoặc chính Animator.transform nếu nó là gốc)
+            modelTransform = animator.transform;
+        }
     }
 
     private void Update()
@@ -67,9 +78,6 @@ public class Player : MonoBehaviour
 
     private void HandleLook()
     {
-        // ** LOẠI BỎ logic: if (mobileJoystick != null && mobileJoystick.IsDragging) return; **
-        // Logic mới sẽ tự động lọc ra các chạm của Joystick
-
         float lookX = 0f;
         float lookY = 0f;
 
@@ -83,36 +91,24 @@ public class Player : MonoBehaviour
         }
 #endif
 
-        // ------------------------------------------------------------------
-        // LOGIC XỬ LÝ CẢM ỨNG ĐA CHẠM (MULTI-TOUCH)
-        // ------------------------------------------------------------------
-
-        // Lặp qua TẤT CẢ các chạm đang có trên màn hình
+        // LOGIC XỬ LÝ CẢM ỨNG ĐA CHẠM
         for (int i = 0; i < Input.touchCount; i++)
         {
             Touch touch = Input.GetTouch(i);
-
-            // 1. Kiểm tra xem chạm này có đang ở trên UI không (Bao gồm cả Joystick và nút khác)
             bool isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
 
-            // 2. Chỉ xử lý khi ngón tay đang di chuyển (Moved) VÀ
-            //    Không chạm vào UI VÀ
-            //    Nằm ở nửa PHẢI màn hình (Giả định nửa trái là khu vực Joystick)
             if (touch.phase == TouchPhase.Moved && !isPointerOverUI && touch.position.x > Screen.width / 2f)
             {
-                // Tính toán giá trị xoay từ chạm này
                 lookX = touch.deltaPosition.x * mouseSensitivity * touchSensitivity;
                 lookY = touch.deltaPosition.y * mouseSensitivity * touchSensitivity;
-
-                // Sau khi tìm thấy một chạm dùng để xoay, ta thoát (break)
-                // để đảm bảo chỉ có một chạm điều khiển camera.
                 break;
             }
         }
-        // ------------------------------------------------------------------
 
-
+        // **GIỮ NGUYÊN NHƯ BAN ĐẦU:** XOAY PLAYER VÀ CAMERA NGANG (Góc nhìn)
         transform.Rotate(Vector3.up * lookX);
+
+        // Xoay Camera Pitch (lên xuống)
         pitch -= lookY;
         pitch = Mathf.Clamp(pitch, -80f, 80f);
         if (cameraTransform != null)
@@ -121,15 +117,47 @@ public class Player : MonoBehaviour
 
     private void HandleMovement()
     {
-        // 1. Logic Input và Tốc độ
+        // 1. Logic Input
         float horzInput = (mobileJoystick != null) ? mobileJoystick.InputDirection.x : Input.GetAxisRaw("Horizontal");
         float vertInput = (mobileJoystick != null) ? mobileJoystick.InputDirection.y : Input.GetAxisRaw("Vertical");
-        float targetInputMagnitude = (mobileJoystick != null) ? mobileJoystick.InputDirection.magnitude : new Vector2(horzInput, vertInput).normalized.magnitude;
+
+        Vector3 rawInputDirection = new Vector3(horzInput, 0f, vertInput).normalized;
+        float targetInputMagnitude = rawInputDirection.magnitude;
 
         smoothInputMagnitude = Mathf.SmoothDamp(smoothInputMagnitude, targetInputMagnitude, ref smoothMoveVelocity, smoothMoveTime);
-        Vector3 rawInputDirection = new Vector3(horzInput, 0f, vertInput).normalized;
+
+        // Tính Vector vận tốc di chuyển (dựa trên hướng của Player (camera) và input)
         Vector3 moveDir = (transform.right * rawInputDirection.x + transform.forward * rawInputDirection.z).normalized;
         moveVelocity = moveDir * moveSpeed * smoothInputMagnitude;
+
+        // *******************************************************
+        // LOGIC XOAY MÔ HÌNH (MODEL) ĐỘC LẬP
+        // *******************************************************
+        if (modelTransform != null && targetInputMagnitude > 0.1f)
+        {
+            // Tính toán hướng di chuyển (moveDir) so với hướng forward của Player
+            // Đây là hướng mà mô hình cần nhìn tới (trong Local Space của Player)
+            Vector3 targetModelForward = rawInputDirection.normalized;
+
+            // Chuyển hướng Local Space (X, Z) thành Target Rotation
+            Quaternion targetRotation = Quaternion.LookRotation(targetModelForward);
+
+            // Làm mượt việc xoay mô hình (xoay theo trục Y cục bộ)
+            modelTransform.localRotation = Quaternion.RotateTowards(
+                modelTransform.localRotation,
+                targetRotation,
+                modelRotationSpeed * Time.deltaTime
+            );
+        }
+        else if (modelTransform != null && targetInputMagnitude <= 0.1f)
+        {
+            // Đảm bảo mô hình quay về hướng mặc định (forward) khi Idle
+            modelTransform.localRotation = Quaternion.RotateTowards(
+               modelTransform.localRotation,
+               Quaternion.identity,
+               modelRotationSpeed * Time.deltaTime
+           );
+        }
 
         // LOGIC ANIMATION TỐC ĐỘ (Run/Idle)
         if (animator != null)
@@ -138,7 +166,7 @@ public class Player : MonoBehaviour
         }
 
         // *******************************************************
-        // LOGIC JUMP VÀ GRAVITY
+        // LOGIC JUMP VÀ GRAVITY (Giữ nguyên)
         // *******************************************************
 
         bool inputJump = Input.GetKey(KeyCode.Space) || isJumpPressedThisFrame;
@@ -149,15 +177,10 @@ public class Player : MonoBehaviour
             if (inputJump)
             {
                 verticalVelocity = jumpForce;
-
                 if (animator != null)
                 {
-                    // !!! SỬA LỖI TÊN TRIGGER: Dùng "JumpTrigger"
                     animator.SetTrigger("JumpTrigger");
-                    // Set trạng thái False ngay lập tức để chuyển sang Jump/Fall
-                    animator.SetBool("IsFalling", true); // Dùng IsFalling để thể hiện đang trên không
-                    // Nếu bạn có IsGrounded trong Animator:
-                    // animator.SetBool("IsGrounded", false);
+                    animator.SetBool("IsFalling", true);
                 }
             }
             else
@@ -167,8 +190,6 @@ public class Player : MonoBehaviour
                 if (animator != null)
                 {
                     animator.SetBool("IsFalling", false);
-                    // Nếu bạn có IsGrounded trong Animator:
-                    // animator.SetBool("IsGrounded", true);
                 }
             }
         }
@@ -176,12 +197,9 @@ public class Player : MonoBehaviour
         {
             // 3. Áp dụng trọng lực & Set IsFalling TRUE
             verticalVelocity += gravity * Time.deltaTime;
-
             if (animator != null)
             {
                 animator.SetBool("IsFalling", true);
-                // Nếu bạn có IsGrounded trong Animator:
-                // animator.SetBool("IsGrounded", false);
             }
         }
 
@@ -193,7 +211,7 @@ public class Player : MonoBehaviour
         controller.Move(finalVelocity * Time.deltaTime);
     }
 
-    // HÀM CÔNG KHAI CHO NÚT NHẢY UI
+    // HÀM CÔNG KHAI CHO NÚT NHẢY UI (Giữ nguyên)
     public void OnJumpButtonDown()
     {
         if (canMove)
@@ -220,5 +238,6 @@ public class Player : MonoBehaviour
     public void SetAnimator(Animator anim)
     {
         this.animator = anim;
+        this.modelTransform = anim.transform;
     }
 }
