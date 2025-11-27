@@ -115,22 +115,27 @@ public class GameUI : MonoBehaviour
         if (gameOver != null)
             gameOver.SetActive(true);
 
-        
-
         // Lưu lại màn hiện tại để khi vào Menu và bấm Play sẽ tiếp tục từ màn này
-        int currentScene = SceneManager.GetActiveScene().buildIndex;
-        PlayerPrefs.SetInt("NextLevelIndex", currentScene);
-        PlayerPrefs.Save();
+        if (SceneManager.GetActiveScene().name == "Tutorial")
+            return; // Bỏ qua tutorial
+        else
+        {
+            int currentScene = SceneManager.GetActiveScene().buildIndex;
+            PlayerPrefs.SetInt("NextLevelIndex", currentScene);
+            PlayerPrefs.Save();
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
 
-        // Dọn dẹp sự kiện
-        Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
-        Player player = FindFirstObjectByType<Player>();
-        if (player != null)
-            player.OnReachEndOfLevel -= ShowGameWin;
+            // Dọn dẹp sự kiện
+            Guard.OnGuardHasSpottedPlayer -= ShowGameLose;
+
+            Player player = FindFirstObjectByType<Player>();
+            if (player != null)
+                player.OnReachEndOfLevel -= ShowGameWin;
+        }
     }
+
 
     // ===== HÀM MỚI: Dùng cho Nút UI Về Menu (Public để gán vào UI) =====
     public void BackToMenu()

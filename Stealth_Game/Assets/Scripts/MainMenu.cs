@@ -26,7 +26,7 @@ public class MainMenu : MonoBehaviour
         {
             string nextPath = SceneUtility.GetScenePathByBuildIndex(next).ToLower();
 
-            if (!nextPath.Contains("characterselect") && !nextPath.Contains("stage"))
+            if (!nextPath.Contains("Tutorial") && !nextPath.Contains("stage"))
                 break;
 
             next++;
